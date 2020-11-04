@@ -7,39 +7,54 @@
 
 import SwiftUI
 
+
+class ContentViewModel: ObservableObject {
+    @Published var type : ToastType = .none
+}
+
 struct ContentView: View {
     
-    @State var type : ToastType = .none
+    @StateObject var viewModel = ContentViewModel()
+//    @State var type : ToastType = .none
     
     var body: some View {
         
         VStack.init(content: {
-            Color.white
-                .frame(width: 300, height: 300, alignment: .center)
+          
             
             Text("show activity")
                 .onTapGesture(perform: {
                     print("show")
-                    type = .active(nil, 2)
+                    self.viewModel.type = .active("loading", 2)
                 })
+            
+            
+            Color.red
+            
+            Spacer()
             
             Text("show text")
                 .onTapGesture(perform: {
                     print("show")
-                    type = .message(nil, 2)
+                    self.viewModel.type = .message("message", 2)
                 })
-            
+            Color.red
+            Spacer()
             Text("hiden")
                 .onTapGesture(perform: {
                     print("hiden")
 
-                    type = .none
+                    self.viewModel.type = .none
                 })
             
         
            
         })
-        .toast($type)
+        .background(
+            Color.gray
+//                .frame(width: 300, height: 300, alignment: .center)
+        )
+        .toast($viewModel.type)
         
        
     }

@@ -5,10 +5,9 @@
 //  Created by Brave Shine on 2020/10/30.
 //
 import SwiftUI
-
 import Foundation
 
-enum ToastType {
+enum ToastType: Equatable {
     case none
     case message(String?,TimeInterval? = nil)
     case active(String?,TimeInterval? = nil)
@@ -16,8 +15,10 @@ enum ToastType {
 
 
 extension View{
+   
     func toast(_ type : Binding<ToastType>) -> some View{
-        return ModifiedContent.init(content: self, modifier: ToastModifier.init(type: type))
+        modifier(ToastModifier.init(type: type))
+//        return ModifiedContent.init(content: self, modifier: ToastModifier.init(type: type))
     }
     
     func anyView() -> AnyView {
@@ -36,11 +37,9 @@ struct ToastModifier: ViewModifier {
     func body(content: Content) -> some View {
         
         if case ToastType.none = type{
-            
             return content.anyView()
         }else{
-            
-          return  ZStack.init(alignment: .center) {
+          return ZStack.init(alignment: .center) {
                 content
             ToastView.init(type: $type)
           }.anyView()
@@ -50,17 +49,17 @@ struct ToastModifier: ViewModifier {
 }
 
 struct ToastView: View {
+    
     @Binding var type: ToastType
     
-    init(type: Binding<ToastType> ) {
+    init(type: Binding<ToastType>) {
         self._type = type
-        hiden()
+        hiden(toastType: type.wrappedValue)
     }
     
     var body: some View  {
         ZStack.init(content: {
-            if case ToastType.active(let text, _) = type{
-                
+            if case ToastType.active(let text, _) = self.type{
                 VStack{
                     ActivityView()
                     if let t = text{
@@ -69,51 +68,50 @@ struct ToastView: View {
                     }
                 }
                 
-            }else if case ToastType.message(let text, _) = type{
+            }else if case ToastType.message(let text, _) = self.type{
                 if let t = text{
                     Text(t)
                         .foregroundColor(Color.white)
                 }else{
                     
                 }
-
             }
-                        
         })
         .padding(.all, 10)
         .background(
+            
             Color.black
-                .blur(radius: 10.0,opaque:true)
-
+                .blur(radius: 5,opaque:true)
         )
         .cornerRadius(5)
     }
-    
-    func hiden(){
-        
+
+    func hiden(toastType: ToastType){
+
         func hiden(after duration: Double?){
             if let t = duration{
                 DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + t) {
-                    self.type = .none
+                    if toastType == type{
+                        self.type = .none
+                    }
                 }
             }
         }
         if case ToastType.active(_, let duration) = type{
             hiden(after: duration)
-           
+
         }else if case ToastType.message(let text, let duration) = type{
             if text == nil || text?.count == 0 {
                 hiden(after: 0)
             }else{
-                hiden(after: duration)
+                hiden(after: duration ?? 2)
             }
         }
     }
+
 }
 
-
 struct ActivityView: UIViewRepresentable {
-//    var color: Color
     
     func makeUIView(context: Context) -> UIActivityIndicatorView {
         let v = UIActivityIndicatorView()
